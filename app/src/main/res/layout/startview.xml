@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/splash_background"
+    android:padding="32dp">
+
+    <!-- 대형 버스 아이콘 -->
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/ic_directions_bus"
+        android:tint="#FFFFFF"
+        android:contentDescription="Bus Icon"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- 앱 타이틀 -->
+    <TextView
+        android:id="@+id/text01"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="안동 버스"
+        android:textSize="40sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:letterSpacing="0.05"
+        android:gravity="center"/>
+
+    <!-- 서브 타이틀 -->
+    <TextView
+        android:id="@+id/text02"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="실시간 운행 정보"
+        android:textSize="18sp"
+        android:textColor="#E3F2FD"
+        android:layout_marginTop="8dp"
+        android:gravity="center"/>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- 하단 설명 -->
+    <TextView
+        android:id="@+id/noti"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="편안한 안동 여행의 시작"
+        android:textSize="14sp"
+        android:textColor="#B3E5FC"
+        android:gravity="center"
+        android:layout_marginBottom="48dp" />
+
+</LinearLayout>

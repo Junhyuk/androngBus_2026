@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- 시외 노선 아이콘 (버스 모양) -->
+    <LinearLayout
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/badge_ilban"
+        android:gravity="center"
+        android:layout_marginEnd="14dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_directions_bus"
+            android:contentDescription="@string/busstop_icon_desc"
+            app:tint="#1565C0" />
+    </LinearLayout>
+
+    <!-- 노선명 -->
+    <TextView
+        android:id="@+id/Busstation3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/busstop_route_name"
+        android:textStyle="bold"
+        android:textSize="17sp"
+        android:textColor="#212121"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- 화살표 -->
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/right_icon"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="@string/busstop_icon_desc"
+        app:tint="#9E9E9E"/>
+
+</LinearLayout>

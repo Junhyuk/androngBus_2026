@@ -1,0 +1,53 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 35
+    //buildToolsVersion '29.0.2'
+
+    defaultConfig {
+        applicationId "com.DGY.Andong.Bustable"
+        minSdkVersion 23
+        targetSdkVersion 36
+        versionCode 50
+        versionName "1.3.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
+    namespace 'com.DGY.Andong.Bustable'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'org.jsoup:jsoup:1.20.1'
+    implementation 'com.google.android.gms:play-services-ads:24.4.0'
+
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'com.getbase:floatingactionbutton:1.10.1'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
+
+    // Legacy support library replaced with AndroidX
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.browser:browser:1.8.0'
+    implementation 'com.google.android.gms:play-services-maps:19.2.0'
+
+}
+
+

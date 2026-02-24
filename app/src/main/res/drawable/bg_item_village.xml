@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 마을버스/지역명 포함 노선 리스트 아이템 배경 - 연한 주황색 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFF8E1"/>
+    <corners android:radius="0dp"/>
+</shape>
+

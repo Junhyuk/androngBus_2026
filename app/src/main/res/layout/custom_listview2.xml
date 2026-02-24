@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/station_item_root"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- 왼쪽 라인 및 정류소 아이콘 -->
+    <RelativeLayout
+        android:layout_width="28dp"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal">
+
+        <!-- 세로 연결선 -->
+        <View
+            android:id="@+id/stop_line"
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:background="#E0E0E0"
+            android:layout_centerHorizontal="true"/>
+
+        <!-- 정류소 포인트 (작은 원) - 기본/활성화 전환용 -->
+        <View
+            android:id="@+id/stop_point"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:background="@drawable/shape_stop_point"
+            android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+    <!-- 정류소 정보 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:id="@+id/customBusStationTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bus_list_default_name"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="#212121"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/stationNum"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bus_list_default_num"
+            android:textSize="13sp"
+            android:textColor="#757575"
+            android:paddingTop="2dp"/>
+    </LinearLayout>
+
+    <!-- 버스 현재 위치 아이콘 (도착 시 표시) -->
+    <LinearLayout
+        android:id="@+id/bus_here_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="invisible">
+
+        <ImageView
+            android:id="@+id/busCurImage"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_bus_here"
+            android:contentDescription="@string/busstop_icon_desc"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="도착"
+            android:textSize="9sp"
+            android:textColor="#F44336"
+            android:textStyle="bold"
+            android:gravity="center"/>
+    </LinearLayout>
+
+</LinearLayout>
+
+

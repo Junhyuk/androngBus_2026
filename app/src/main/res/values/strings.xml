@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">안동 버스 정보 (시내,시외) </string>
+    <string name="busstopinfo">버스 정류장 정보</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="title_section1">시내</string>
+    <string name="title_section2">시외</string>
+    <string name="title_section3">노선 즐겨찾기</string>
+
+    <string name="tab1_button">Button in First Tab</string>
+
+
+    <string name="busstop_subtitle">버스 정류장</string>
+    <string name="busstop_default_name">정류소 이름</string>
+    <string name="busstop_gps_btn">위치 찾기</string>
+    <string name="busstop_refresh">새로고침</string>
+    <string name="busstop_icon_desc">버스 정류소 아이콘</string>
+    <string name="busstop_bus_num_default">00</string>
+    <string name="busstop_route_name">노선명</string>
+    <string name="busstop_arrive_time">도착 예정</string>
+    <string name="busstop_current_pos">현재 위치</string>
+    <string name="bus_list_default_name">버스정류장이름</string>
+    <string name="bus_list_default_num">번호</string>
+
+
+    <string name="admob_app_id">ca-app-pub-3838356619841594~4353044915</string>
+    <string name="banner_ad_unit_id_for_test">ca-app-pub-3838356619841594/5768595529</string>
+
+
+</resources>
