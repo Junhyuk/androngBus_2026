@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 급행 노선 배지 배경 - 빨간색 -->
+<!-- 급행 노선 배지 배경 - 빨간색 (메모 모양) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
+    android:shape="rectangle">
     <solid android:color="#C62828"/>
-    <size android:width="60dp" android:height="60dp"/>
+    <corners android:radius="10dp"/>
 </shape>
 
 

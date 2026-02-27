@@ -274,7 +274,7 @@ public class busTimeTable extends AppCompatActivity {
             TableRow tableRow = new TableRow(this);
             tableRow.setLayoutParams(new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                    dpToPx(64)));   // 행 높이 64dp 고정
 
             // 홀짝 행 배경 구분
             boolean isEven = (k % 2 == 0);
@@ -290,7 +290,7 @@ public class busTimeTable extends AppCompatActivity {
             tvTime.setTextSize(17);
             tvTime.setTextColor(Color.parseColor("#0D47A1"));
             tvTime.setTypeface(null, android.graphics.Typeface.BOLD);
-            tvTime.setPadding(dpToPx(10), dpToPx(14), dpToPx(10), dpToPx(14));
+            tvTime.setPadding(dpToPx(10), dpToPx(18), dpToPx(10), dpToPx(18));
             tvTime.setBackgroundColor(rowBg);
             tableRow.addView(tvTime);
 
@@ -302,7 +302,7 @@ public class busTimeTable extends AppCompatActivity {
                 tvArrival.setTextSize(17);
                 tvArrival.setTextColor(Color.parseColor("#1B5E20"));
                 tvArrival.setTypeface(null, android.graphics.Typeface.BOLD);
-                tvArrival.setPadding(dpToPx(10), dpToPx(14), dpToPx(10), dpToPx(14));
+                tvArrival.setPadding(dpToPx(10), dpToPx(18), dpToPx(10), dpToPx(18));
                 tvArrival.setBackgroundColor(rowBg);
                 tableRow.addView(tvArrival);
             }
@@ -340,9 +340,10 @@ public class busTimeTable extends AppCompatActivity {
             TextView tvGrade = new TextView(this);
             tvGrade.setText(grade);
             tvGrade.setGravity(Gravity.CENTER);
-            tvGrade.setTextSize(14);
+            tvGrade.setTextSize(15);
             tvGrade.setTextColor(badgeTextColor);
             tvGrade.setTypeface(null, android.graphics.Typeface.BOLD);
+            tvGrade.setMinHeight(dpToPx(40));
 
             // 배지 모양 (둥근 사각형)
             android.graphics.drawable.GradientDrawable badgeDrawable =
@@ -352,11 +353,11 @@ public class busTimeTable extends AppCompatActivity {
 
             TableRow.LayoutParams badgeParams = new TableRow.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
-            badgeParams.setMargins(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
+                    dpToPx(44));   // 배지 높이 44dp 고정
+            badgeParams.setMargins(dpToPx(8), dpToPx(10), dpToPx(8), dpToPx(10));
             tvGrade.setLayoutParams(badgeParams);
             tvGrade.setBackground(badgeDrawable);
-            tvGrade.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            tvGrade.setPadding(dpToPx(8), dpToPx(0), dpToPx(8), dpToPx(0));
 
             tableRow.addView(tvGrade);
 
@@ -368,7 +369,7 @@ public class busTimeTable extends AppCompatActivity {
                 tvPrice.setTextSize(13);
                 tvPrice.setTextColor(Color.parseColor("#37474F"));
                 tvPrice.setTypeface(null, android.graphics.Typeface.NORMAL);
-                tvPrice.setPadding(dpToPx(8), dpToPx(14), dpToPx(8), dpToPx(14));
+                tvPrice.setPadding(dpToPx(8), dpToPx(18), dpToPx(8), dpToPx(18));
                 tvPrice.setBackgroundColor(rowBg);
                 tableRow.addView(tvPrice);
             }
@@ -389,10 +390,10 @@ public class busTimeTable extends AppCompatActivity {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setGravity(Gravity.CENTER);
-        tv.setTextSize(14);
+        tv.setTextSize(15);
         tv.setTextColor(Color.WHITE);
         tv.setTypeface(null, android.graphics.Typeface.BOLD);
-        tv.setPadding(dpToPx(10), dpToPx(12), dpToPx(10), dpToPx(12));
+        tv.setPadding(dpToPx(10), dpToPx(18), dpToPx(10), dpToPx(18));
         row.addView(tv);
     }
 

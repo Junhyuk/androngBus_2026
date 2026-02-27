@@ -45,7 +45,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -369,6 +373,7 @@ public class Tab1 extends Fragment implements Parcelable {
 			TextView busNum = (TextView) convertView.findViewById(R.id.BusNum);
 			TextView st_edStName = (TextView) convertView.findViewById(R.id.Busstation);
 			TextView st_edTime = (TextView) convertView.findViewById(R.id.BusTime);
+			TextView busFirstLastTime = (TextView) convertView.findViewById(R.id.BusFirstLastTime);
 			android.widget.LinearLayout badgeLayout = (android.widget.LinearLayout) convertView.findViewById(R.id.bus_badge_layout);
 
 			CheckBox star = (CheckBox) convertView.findViewById(R.id.btn_star);
@@ -381,6 +386,19 @@ public class Tab1 extends Fragment implements Parcelable {
 			busNum.setText(myItem.getBusNum());
 			st_edStName.setText(myItem.getBusStation());
 			st_edTime.setText(myItem.getBusTime());
+
+			// 첫차/막차 정보 표시
+			String firstTime = myItem.getFirstBusTime() != null ? myItem.getFirstBusTime() : "미확인";
+			String lastTime = myItem.getLastBusTime() != null ? myItem.getLastBusTime() : "미확인";
+
+			if (busFirstLastTime != null) {
+				busFirstLastTime.setText("첫차: " + firstTime + " | 막차: " + lastTime);
+			} else {
+				Log.e("JunDebug_FirstLast", "busFirstLastTime TextView is NULL! Layout issue detected.");
+			}
+
+			// 첫차/막차 정보 로깅
+			Log.i("JunDebug_FirstLast", "getView position: " + position + " | BusNum: " + myItem.getBusNum() + " | FirstTime: " + firstTime + " | LastTime: " + lastTime);
 
 			/* 노선 유형별 배지 색상 및 아이템 배경 구분
 			 * 1) "순환" 포함    → 초록색 배지
@@ -517,7 +535,7 @@ public class Tab1 extends Fragment implements Parcelable {
 
 
 		/* 아이템 데이터 추가를 위한 함수. 자신이 원하는대로 작성 */
-		public void addItem(String BusNum, String BusStation, String BusTime, String RouteId) {
+		public void addItem(String BusNum, String BusStation, String BusTime, String RouteId, String firstBusTime, String lastBusTime) {
 
 			MyItem mItem = new MyItem();
 
@@ -526,6 +544,8 @@ public class Tab1 extends Fragment implements Parcelable {
 			mItem.setBusStation(BusStation);
 			mItem.setBusTime(BusTime);
 			mItem.setRouteId(RouteId);
+			mItem.setFirstBusTime(firstBusTime);
+			mItem.setLastBusTime(lastBusTime);
 
 			/* mItems에 MyItem을 추가한다. */
 			mItems.add(mItem);
@@ -568,9 +588,14 @@ public class Tab1 extends Fragment implements Parcelable {
 
 			String RID = businfoList.get(i).getRouteID();
 
-			mMyAdapter.addItem(businfoList.get(i).getBusNum(), StationInfo, BusTimeInfo, RID);
+			// 첫차/막차 정보 추가
+			Log.i("JunDebug_FirstLast", "addItem called - BusNum: " + businfoList.get(i).getBusNum() + " | FirstTime: " + startTime + " | LastTime: " + endTime);
+			mMyAdapter.addItem(businfoList.get(i).getBusNum(), StationInfo, BusTimeInfo, RID, startTime, endTime);
 
 		}
+
+		mMyAdapter.notifyDataSetChanged();
+		Log.i("JunDebug_FirstLast", "BusdataUpdate notifyDataSetChanged 완료, items=" + mMyAdapter.getCount());
 
 //		Intent intent = new Intent(iContext, Tab3.class);
 //		intent.putParcelableArrayListExtra(FavoritStr.ALL_BUS_ROUTEID);
@@ -642,6 +667,27 @@ public class Tab1 extends Fragment implements Parcelable {
 
 				Log.i("JunDebug", "Parsing  num of jarray  " + jarray.length());
 
+				// API 응답 샘플 로깅 (첫 번째 아이템)
+				if (jarray.length() > 0) {
+					try {
+						JSONObject firstItem = jarray.getJSONObject(0);
+						String firstItemJson = firstItem.toString();
+						Log.i("JunDebug_FirstLast", "Sample API Response: " + firstItemJson.substring(0, Math.min(500, firstItemJson.length())));
+
+						// 모든 키 출력
+						Iterator<String> keys = firstItem.keys();
+						StringBuilder keyList = new StringBuilder("Available keys: ");
+						while (keys.hasNext()) {
+							keyList.append(keys.next()).append(", ");
+						}
+						Log.i("JunDebug_FirstLast", keyList.toString());
+					} catch (Exception e) {
+						Log.i("JunDebug_FirstLast", "Error logging sample: " + e.getMessage());
+					}
+				}
+
+
+
 
 				for (int i = 0; i < jarray.length(); i++) {
 
@@ -675,6 +721,9 @@ public class Tab1 extends Fragment implements Parcelable {
 					String sTime  = jObject.optString("stTm");
 					String eTime  = jObject.optString("edTm");
 					String routeID  = jObject.optString("routeId");
+
+					// 첫차/막차 정보 로깅
+					Log.i("JunDebug_FirstLast", "BusNum: " + BusNumStr + " | FirstTime(stTm): " + sTime + " | LastTime(edTm): " + eTime);
 
 					int idx = BusNumStr.indexOf("-");
 					String busidx = "";
@@ -778,6 +827,182 @@ public class Tab1 extends Fragment implements Parcelable {
 		protected void onPostExecute(Document doc) {
 			Log.i("JunDebug" ,"onPostExecute start ");
 			BusdataUpdate();
+			// 시간표 페이지에서 첫차/막차 정보 비동기 로딩
+			fetchTimetableAndUpdate();
+		}
+	}
+
+	/**
+	 * https://bus.andong.go.kr/m03/s01.do 시간표 HTML 페이지를 파싱하여
+	 * 노선번호별 첫차/막차 시간을 추출하고 ListView를 갱신하는 Task.
+	 * ThreadTask 대신 Thread + Handler 방식으로 비동기 처리.
+	 */
+	private void fetchTimetableAndUpdate() {
+		final android.app.Activity act = getActivity();
+		if (act == null || act.isFinishing()) {
+			Log.e("JunDebug_FirstLast", "fetchTimetableAndUpdate: activity null/finishing");
+			return;
+		}
+		Log.i("JunDebug_FirstLast", "fetchTimetableAndUpdate 시작");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				final HashMap<String, String[]> result = parseTimetablePage();
+				Log.i("JunDebug_FirstLast", "parseTimetablePage 완료 routes=" + result.size());
+				act.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("JunDebug_FirstLast", "runOnUiThread applyTimetableToUI 시작");
+						applyTimetableToUI(result);
+					}
+				});
+			}
+		}).start();
+	}
+
+	/** H:MM 또는 HH:MM → 분(int) 변환 */
+	private int timeToMinutes(String t) {
+		try {
+			String[] p = t.trim().split(":");
+			if (p.length == 2) return Integer.parseInt(p[0]) * 60 + Integer.parseInt(p[1]);
+		} catch (Exception ignored) {}
+		return -1;
+	}
+
+	/** 시간표 HTML 파싱 → routeNum → [firstStr, lastStr] */
+	private HashMap<String, String[]> parseTimetablePage() {
+		HashMap<String, String[]> routeFirstLast = new HashMap<>();
+		HashMap<String, int[]>   routeMinutes    = new HashMap<>();
+		try {
+			java.net.HttpURLConnection conn =
+					(java.net.HttpURLConnection) new URL("https://bus.andong.go.kr/m03/s01.do?c=20600&i=20610").openConnection();
+			conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+			conn.setConnectTimeout(10000);
+			conn.setReadTimeout(15000);
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while ((line = reader.readLine()) != null) sb.append(line).append("\n");
+			reader.close();
+			conn.disconnect();
+
+			String html = sb.toString();
+			Log.i("JunDebug_FirstLast", "Timetable HTML length: " + html.length());
+
+			Pattern trPat  = Pattern.compile("<tr[^>]*>(.*?)</tr>",   Pattern.DOTALL);
+			Pattern tdPat  = Pattern.compile("<td[^>]*>(.*?)</td>",   Pattern.DOTALL);
+			Pattern tagPat = Pattern.compile("<[^>]*>");
+			Pattern timePat = Pattern.compile("^\\d{1,2}:\\d{2}$");
+
+			Matcher trM = trPat.matcher(html);
+			int parsedRows = 0;
+			while (trM.find()) {
+				List<String> tds = new ArrayList<>();
+				Matcher tdM = tdPat.matcher(trM.group(1));
+				while (tdM.find()) tds.add(tagPat.matcher(tdM.group(1)).replaceAll("").trim());
+
+				// 구조: [0]=NO, [1]=노선명, [2]=유형, [3]=노선정보, [4~]=회차 시간
+				if (tds.size() < 5) continue;
+				String routeName = tds.get(1).trim();
+				if (routeName.isEmpty()) continue;
+				int pi = routeName.indexOf("(");
+				String routeNum = (pi > 0) ? routeName.substring(0, pi).trim() : routeName;
+				if (routeNum.isEmpty()) continue;
+
+				// index 3부터 시간 데이터 스캔 (노선정보 칸에도 시간이 없으므로 안전)
+				for (int i = 3; i < tds.size(); i++) {
+					String ts = tds.get(i).trim();
+					if (!timePat.matcher(ts).matches()) continue;
+					int mins = timeToMinutes(ts);
+					if (mins < 0) continue;
+
+					if (!routeMinutes.containsKey(routeNum)) {
+						routeMinutes.put(routeNum, new int[]{Integer.MAX_VALUE, -1});
+						routeFirstLast.put(routeNum, new String[]{"", ""});
+					}
+					int[]    minArr = routeMinutes.get(routeNum);
+					String[] strArr = routeFirstLast.get(routeNum);
+					if (mins < minArr[0]) { minArr[0] = mins; strArr[0] = ts; }
+					if (mins > minArr[1]) { minArr[1] = mins; strArr[1] = ts; }
+				}
+				parsedRows++;
+			}
+			Log.i("JunDebug_FirstLast", "Parsed rows=" + parsedRows + ", routes=" + routeFirstLast.size());
+			int n = 0;
+			for (Map.Entry<String, String[]> e : routeFirstLast.entrySet()) {
+				Log.i("JunDebug_FirstLast", "  " + e.getKey() + " 첫차=" + e.getValue()[0] + " 막차=" + e.getValue()[1]);
+				if (++n >= 15) break;
+			}
+		} catch (Exception e) {
+			Log.e("JunDebug_FirstLast", "parseTimetablePage error: " + e.getMessage());
+		}
+		return routeFirstLast;
+	}
+
+	/** 파싱된 첫차/막차 데이터를 어댑터 및 SharedPreferences에 반영 */
+	private void applyTimetableToUI(HashMap<String, String[]> routeFirstLast) {
+		if (routeFirstLast == null || routeFirstLast.isEmpty()) {
+			Log.w("JunDebug_FirstLast", "applyTimetableToUI: 데이터 없음");
+			return;
+		}
+		if (mMyAdapter == null) {
+			Log.e("JunDebug_FirstLast", "applyTimetableToUI: mMyAdapter null");
+			return;
+		}
+		Log.i("JunDebug_FirstLast", "applyTimetableToUI start, adapter items=" + mMyAdapter.getCount());
+
+		boolean updated = false;
+		for (int i = 0; i < mMyAdapter.getCount(); i++) {
+			MyItem item = mMyAdapter.getItem(i);
+			if (item == null) continue;
+			String busNum = item.getBusNum();
+			if (busNum == null) continue;
+			// "110-1" → "110"
+			String key = busNum.contains("-") ? busNum.substring(0, busNum.indexOf("-")).trim() : busNum.trim();
+			String[] times = routeFirstLast.get(key);
+			if (times != null && !times[0].isEmpty()) {
+				item.setFirstBusTime(times[0]);
+				item.setLastBusTime(times[1]);
+				// 운행시간 텍스트도 갱신 (BusTime 칸: "첫차 ~ 막차")
+				item.setBusTime(times[0] + " ~ " + times[1]);
+				// BusInfo 동기화
+				if (i < businfoList.size()) {
+					businfoList.get(i).startTime = times[0];
+					businfoList.get(i).endTime   = times[1];
+				}
+				Log.i("JunDebug_FirstLast", "Updated [" + i + "] " + busNum + " 첫차=" + times[0] + " 막차=" + times[1]);
+				updated = true;
+			} else {
+				Log.w("JunDebug_FirstLast", "No match for busNum=" + busNum + " key=" + key);
+			}
+		}
+
+		if (updated) {
+			mMyAdapter.notifyDataSetChanged();
+			Log.i("JunDebug_FirstLast", "notifyDataSetChanged 호출 완료");
+		}
+
+		// 즐겨찾기(Tab3) SharedPreferences 동기화
+		for (int i = 0; i < FavoriteBuscheckByRouteID.size(); i++) {
+			String routeID = FavoriteBuscheckByRouteID.get(i);
+			for (BusInfo info : businfoList) {
+				if (!routeID.equals(info.getRouteID())) continue;
+				String key = info.busNum.contains("-")
+						? info.busNum.substring(0, info.busNum.indexOf("-")).trim()
+						: info.busNum.trim();
+				String[] times = routeFirstLast.get(key);
+				if (times != null && !times[0].isEmpty()) {
+					if (i < FavoriteBusStartTime.size()) FavoriteBusStartTime.set(i, times[0]);
+					if (i < FavoriteBusEndTime.size())   FavoriteBusEndTime.set(i, times[1]);
+				}
+				break;
+			}
+		}
+		if (!FavoriteBusStartTime.isEmpty()) {
+			setStringArrayPref(FavoritStr.FAVORITE_BUS_START_TIME, FavoriteBusStartTime);
+			setStringArrayPref(FavoritStr.FAVORITE_BUS_END_TIME,   FavoriteBusEndTime);
+			Log.i("JunDebug_FirstLast", "즐겨찾기 첫차/막차 SharedPreferences 저장 완료");
 		}
 	}
 

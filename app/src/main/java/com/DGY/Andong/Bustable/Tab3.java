@@ -20,8 +20,15 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -170,6 +177,8 @@ public class Tab3 extends Fragment {
 		});
 
 		BusdataUpdate();
+		// 시간표 페이지에서 최신 첫차/막차 정보 비동기 로딩
+		fetchTimetableAndUpdate();
 		return view;
 	}
 
@@ -259,24 +268,151 @@ public class Tab3 extends Fragment {
 			String BusTimeInfo = "첫차 : " + businfoList.get(i).getStartTime()  +  "  |  막차 : " + businfoList.get(i).getEndTime();
 			String RID = businfoList.get(i).getRouteID();
 
-
-			mMyAdapter.addItem(businfoList.get(i).getBusNum(), 	StationInfo, BusTimeInfo, RID);
-
+			mMyAdapter.addItem(businfoList.get(i).getBusNum(), 	StationInfo, BusTimeInfo, RID, businfoList.get(i).getStartTime(), businfoList.get(i).getEndTime());
 
 			//Log.i("JunDebug", "Bus EndTime --> " + businfoList.get(i).getEndName());
 		}
 	}
 
 	private void removeRedundantRouteID() {
-
-		ArrayList <String > resultList  = new ArrayList<String>();
+		ArrayList<String> resultList = new ArrayList<String>();
 		for (int i = 0; i < FavoriteBuscheckByRouteID.size(); i++) {
 			if (!resultList.contains(FavoriteBuscheckByRouteID.get(i))) {
 				resultList.add(FavoriteBuscheckByRouteID.get(i));
 			}
 		}
-
 		FavoriteBuscheckByRouteID = resultList;
+	}
+
+	// ──────────────────────────────────────────────────────────────────
+	// 시간표 HTML 파싱 → 첫차/막차 비동기 업데이트 (Tab3 즐겨찾기용)
+	// ──────────────────────────────────────────────────────────────────
+
+	private void fetchTimetableAndUpdate() {
+		final android.app.Activity act = getActivity();
+		if (act == null || act.isFinishing()) {
+			Log.e("JunDebug_FirstLast", "Tab3 fetchTimetableAndUpdate: activity null/finishing");
+			return;
+		}
+		Log.i("JunDebug_FirstLast", "Tab3 fetchTimetableAndUpdate 시작");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				final HashMap<String, String[]> result = parseTimetablePage();
+				Log.i("JunDebug_FirstLast", "Tab3 parseTimetablePage 완료 routes=" + result.size());
+				act.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("JunDebug_FirstLast", "Tab3 runOnUiThread applyTimetableToUI 시작");
+						applyTimetableToUI(result);
+					}
+				});
+			}
+		}).start();
+	}
+
+	private int timeToMinutes(String t) {
+		try {
+			String[] p = t.trim().split(":");
+			if (p.length == 2) return Integer.parseInt(p[0]) * 60 + Integer.parseInt(p[1]);
+		} catch (Exception ignored) {}
+		return -1;
+	}
+
+	private HashMap<String, String[]> parseTimetablePage() {
+		HashMap<String, String[]> routeFirstLast = new HashMap<>();
+		HashMap<String, int[]>   routeMinutes    = new HashMap<>();
+		try {
+			java.net.HttpURLConnection conn =
+					(java.net.HttpURLConnection) new java.net.URL("https://bus.andong.go.kr/m03/s01.do?c=20600&i=20610").openConnection();
+			conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+			conn.setConnectTimeout(10000);
+			conn.setReadTimeout(15000);
+			java.io.BufferedReader reader = new java.io.BufferedReader(
+					new java.io.InputStreamReader(conn.getInputStream(), "utf-8"));
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while ((line = reader.readLine()) != null) sb.append(line).append("\n");
+			reader.close();
+			conn.disconnect();
+
+			String html = sb.toString();
+			Pattern trPat   = Pattern.compile("<tr[^>]*>(.*?)</tr>",  Pattern.DOTALL);
+			Pattern tdPat   = Pattern.compile("<td[^>]*>(.*?)</td>",  Pattern.DOTALL);
+			Pattern tagPat  = Pattern.compile("<[^>]*>");
+			Pattern timePat = Pattern.compile("^\\d{1,2}:\\d{2}$");
+
+			Matcher trM = trPat.matcher(html);
+			while (trM.find()) {
+				List<String> tds = new ArrayList<>();
+				Matcher tdM = tdPat.matcher(trM.group(1));
+				while (tdM.find()) tds.add(tagPat.matcher(tdM.group(1)).replaceAll("").trim());
+				if (tds.size() < 5) continue;
+				String routeName = tds.get(1).trim();
+				if (routeName.isEmpty()) continue;
+				int pi = routeName.indexOf("(");
+				String routeNum = (pi > 0) ? routeName.substring(0, pi).trim() : routeName;
+				if (routeNum.isEmpty()) continue;
+				for (int i = 3; i < tds.size(); i++) {
+					String ts = tds.get(i).trim();
+					if (!timePat.matcher(ts).matches()) continue;
+					int mins = timeToMinutes(ts);
+					if (mins < 0) continue;
+					if (!routeMinutes.containsKey(routeNum)) {
+						routeMinutes.put(routeNum, new int[]{Integer.MAX_VALUE, -1});
+						routeFirstLast.put(routeNum, new String[]{"", ""});
+					}
+					int[]    minArr = routeMinutes.get(routeNum);
+					String[] strArr = routeFirstLast.get(routeNum);
+					if (mins < minArr[0]) { minArr[0] = mins; strArr[0] = ts; }
+					if (mins > minArr[1]) { minArr[1] = mins; strArr[1] = ts; }
+				}
+			}
+			Log.i("JunDebug_FirstLast", "Tab3 parseTimetablePage routes=" + routeFirstLast.size());
+		} catch (Exception e) {
+			Log.e("JunDebug_FirstLast", "Tab3 parseTimetablePage error: " + e.getMessage());
+		}
+		return routeFirstLast;
+	}
+
+	private void applyTimetableToUI(HashMap<String, String[]> routeFirstLast) {
+		if (routeFirstLast == null || routeFirstLast.isEmpty()) {
+			Log.w("JunDebug_FirstLast", "Tab3 applyTimetableToUI: 데이터 없음");
+			return;
+		}
+		if (mMyAdapter == null) {
+			Log.e("JunDebug_FirstLast", "Tab3 applyTimetableToUI: mMyAdapter null");
+			return;
+		}
+		Log.i("JunDebug_FirstLast", "Tab3 applyTimetableToUI start, items=" + mMyAdapter.getCount());
+		boolean updated = false;
+		for (int i = 0; i < mMyAdapter.getCount(); i++) {
+			MyItem item = mMyAdapter.getItem(i);
+			if (item == null) continue;
+			String busNum = item.getBusNum();
+			if (busNum == null) continue;
+			String key = busNum.contains("-") ? busNum.substring(0, busNum.indexOf("-")).trim() : busNum.trim();
+			String[] times = routeFirstLast.get(key);
+			if (times != null && !times[0].isEmpty()) {
+				item.setFirstBusTime(times[0]);
+				item.setLastBusTime(times[1]);
+				// 운행시간 텍스트도 갱신
+				item.setBusTime("첫차: " + times[0] + "  |  막차: " + times[1]);
+				// BusInfo 동기화
+				if (i < businfoList.size()) {
+					businfoList.get(i).startTime = times[0];
+					businfoList.get(i).endTime   = times[1];
+				}
+				Log.i("JunDebug_FirstLast", "Tab3 Updated [" + i + "] " + busNum + " 첫차=" + times[0] + " 막차=" + times[1]);
+				updated = true;
+			} else {
+				Log.w("JunDebug_FirstLast", "Tab3 No match busNum=" + busNum + " key=" + key);
+			}
+		}
+		if (updated) {
+			mMyAdapter.notifyDataSetChanged();
+			Log.i("JunDebug_FirstLast", "Tab3 notifyDataSetChanged 호출 완료");
+		}
 	}
 
 
@@ -332,6 +468,7 @@ public class Tab3 extends Fragment {
 			TextView busNum = (TextView) convertView.findViewById(R.id.BusNum2);
 			TextView st_edStName = (TextView) convertView.findViewById(R.id.Busstation2);
 			TextView st_edTime = (TextView) convertView.findViewById(R.id.BusTime2);
+			TextView busFirstLastTime = (TextView) convertView.findViewById(R.id.BusFirstLastTime2);
 			android.widget.LinearLayout badgeLayout = (android.widget.LinearLayout) convertView.findViewById(R.id.bus_badge_layout_tab3);
 
 			MyItem myItem = getItem(position);
@@ -346,6 +483,19 @@ public class Tab3 extends Fragment {
 			busNum.setText(myItem.getBusNum());
 			st_edStName.setText(myItem.getBusStation());
 			st_edTime.setText(myItem.getBusTime());
+
+			// 첫차/막차 정보 표시
+			String firstTime = myItem.getFirstBusTime() != null ? myItem.getFirstBusTime() : "미확인";
+			String lastTime = myItem.getLastBusTime() != null ? myItem.getLastBusTime() : "미확인";
+
+			if (busFirstLastTime != null) {
+				busFirstLastTime.setText("첫차: " + firstTime + " | 막차: " + lastTime);
+			} else {
+				Log.e("JunDebug_FirstLast", "Tab3 - busFirstLastTime TextView is NULL! Layout issue detected.");
+			}
+
+			// 첫차/막차 정보 로깅
+			Log.i("JunDebug_FirstLast", "Tab3 getView position: " + position + " | BusNum: " + myItem.getBusNum() + " | FirstTime: " + firstTime + " | LastTime: " + lastTime);
 
 			/* 노선 유형별 배지 색상 및 아이템 배경 구분
 			 * 1) "순환" 포함    → 초록색 배지
@@ -395,7 +545,7 @@ public class Tab3 extends Fragment {
 
 
 		/* 아이템 데이터 추가를 위한 함수. 자신이 원하는대로 작성 */
-		public void addItem(String BusNum, String BusStation, String BusTime, String RouteId) {
+		public void addItem(String BusNum, String BusStation, String BusTime, String RouteId, String firstBusTime, String lastBusTime) {
 
 			MyItem mItem = new MyItem();
 
@@ -404,6 +554,8 @@ public class Tab3 extends Fragment {
 			mItem.setBusStation(BusStation);
 			mItem.setBusTime(BusTime);
 			mItem.setRouteId(RouteId);
+			mItem.setFirstBusTime(firstBusTime);
+			mItem.setLastBusTime(lastBusTime);
 
 			/* mItems에 MyItem을 추가한다. */
 			mItems.add(mItem);

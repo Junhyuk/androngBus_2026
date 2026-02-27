@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- HTTP 허용 (기존 bus.andong.go.kr:8080) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">bus.andong.go.kr</domain>
+    </domain-config>
+    <!-- 기본: HTTPS 허용 (시스템 CA 신뢰) -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+

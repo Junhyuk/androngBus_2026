@@ -55,6 +55,17 @@
             android:textSize="11sp"
             android:textColor="#757575"
             android:paddingTop="2dp" />
+
+        <!-- 첫차/막차 정보 추가 -->
+        <TextView
+            android:id="@+id/BusFirstLastTime2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="첫차: 00:00 | 막차: 00:00"
+            android:textSize="10sp"
+            android:textColor="#1565C0"
+            android:paddingTop="1dp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 

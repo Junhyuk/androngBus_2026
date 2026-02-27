@@ -2,17 +2,16 @@ package com.DGY.Andong.Bustable;
 
 import android.graphics.drawable.Drawable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MyItem {
 
 
     private String BusNum;
     private String BusStation;
     private String RouteIdBusTime;
-    private String RouteId;;
+    private String RouteId;
     private Drawable icon;
+    private String FirstBusTime;  // 첫차 시간
+    private String LastBusTime;   // 막차 시간
 
     public Drawable getIcon() {
         return icon;
@@ -50,5 +49,21 @@ public class MyItem {
     }
     public void setRouteId(String RouteId) {
         this.RouteId = RouteId;
+    }
+
+    public String getFirstBusTime() {
+        return FirstBusTime;
+    }
+
+    public void setFirstBusTime(String FirstBusTime) {
+        this.FirstBusTime = FirstBusTime;
+    }
+
+    public String getLastBusTime() {
+        return LastBusTime;
+    }
+
+    public void setLastBusTime(String LastBusTime) {
+        this.LastBusTime = LastBusTime;
     }
 }
